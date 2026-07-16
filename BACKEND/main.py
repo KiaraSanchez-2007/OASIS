@@ -1,3 +1,6 @@
+import os
+import requests
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
@@ -20,8 +23,13 @@ app.add_middleware(
 
 engine = OasisEngine()
 
-# Token para verificar el webhook con Meta
-VERIFY_TOKEN = "OASIS_UTP_2026"
+# ==========================
+# VARIABLES DE ENTORNO
+# ==========================
+
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "OASIS_UTP_2026")
+WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
+PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
 
 
 # ==========================
@@ -48,6 +56,38 @@ def mensaje(texto: str = ""):
 
 
 # ==========================
+# ENVIAR MENSAJE A WHATSAPP
+# ==========================
+
+def enviar_mensaje(numero: str, mensaje: str):
+
+    url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
+
+    headers = {
+        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "messaging_product": "whatsapp",
+        "to": numero,
+        "type": "text",
+        "text": {
+            "body": mensaje
+        }
+    }
+
+    respuesta = requests.post(
+        url,
+        headers=headers,
+        json=data
+    )
+
+    print("Respuesta Meta:", respuesta.status_code)
+    print(respuesta.text)
+
+
+# ==========================
 # WEBHOOK WHATSAPP
 # ==========================
 
@@ -71,5 +111,46 @@ async def recibir_webhook(request: Request):
 
     print("Mensaje recibido desde WhatsApp:")
     print(body)
+
+    try:
+
+        if "entry" not in body:
+            return {"status": "ok"}
+
+        value = body["entry"][0]["changes"][0]["value"]
+
+        if "messages" not in value:
+            return {"status": "ok"}
+
+        mensaje = value["messages"][0]
+
+        numero = mensaje["from"]
+
+        texto = ""
+
+        if mensaje["type"] == "text":
+            texto = mensaje["text"]["body"]
+
+        print("Número:", numero)
+        print("Texto:", texto)
+
+        respuesta = engine.procesar(texto)
+
+        if isinstance(respuesta, dict):
+
+            if "respuesta" in respuesta:
+                respuesta = respuesta["respuesta"]
+
+            elif "mensaje" in respuesta:
+                respuesta = respuesta["mensaje"]
+
+            else:
+                respuesta = str(respuesta)
+
+        enviar_mensaje(numero, str(respuesta))
+
+    except Exception as e:
+
+        print("ERROR:", str(e))
 
     return {"status": "ok"}
