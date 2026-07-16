@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 
 from engine import OasisEngine
 
@@ -18,11 +19,14 @@ app.add_middleware(
 )
 
 engine = OasisEngine()
+VERIFY_TOKEN = "OASIS_UTP_2026"
 
+# ==========================
+# WEB
+# ==========================
 
 @app.get("/")
 def inicio():
-
     return {
         "proyecto": "OASIS",
         "estado": "Servidor funcionando correctamente"
@@ -33,11 +37,38 @@ def inicio():
 def mensaje(texto: str = ""):
 
     if texto.lower() == "inicio":
-
         engine.chatbot.memoria.limpiar()
-
         engine.chatbot.estado = "inicio"
-
         engine.chatbot.pregunta_actual = 1
 
     return engine.procesar(texto)
+
+
+# ==========================
+# WEBHOOK WHATSAPP
+# ==========================
+
+VERIFY_TOKEN = "OASIS_UTP_2026"
+
+
+@app.get("/webhook")
+async def verificar_webhook(request: Request):
+
+    mode = request.query_params.get("hub.mode")
+    token = request.query_params.get("hub.verify_token")
+    challenge = request.query_params.get("hub.challenge")
+
+    if mode == "subscribe" and token == VERIFY_TOKEN:
+        return PlainTextResponse(challenge)
+
+    return PlainTextResponse("Error", status_code=403)
+
+
+@app.post("/webhook")
+async def recibir_webhook(request: Request):
+
+    body = await request.json()
+
+    print(body)
+
+    return {"status": "ok"}
