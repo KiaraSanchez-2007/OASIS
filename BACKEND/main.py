@@ -19,7 +19,10 @@ app.add_middleware(
 )
 
 engine = OasisEngine()
+
+# Token para verificar el webhook con Meta
 VERIFY_TOKEN = "OASIS_UTP_2026"
+
 
 # ==========================
 # WEB
@@ -48,9 +51,6 @@ def mensaje(texto: str = ""):
 # WEBHOOK WHATSAPP
 # ==========================
 
-VERIFY_TOKEN = "OASIS_UTP_2026"
-
-
 @app.get("/webhook")
 async def verificar_webhook(request: Request):
 
@@ -69,6 +69,7 @@ async def recibir_webhook(request: Request):
 
     body = await request.json()
 
+    print("Mensaje recibido desde WhatsApp:")
     print(body)
 
     return {"status": "ok"}
