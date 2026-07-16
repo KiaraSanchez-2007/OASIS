@@ -7,6 +7,10 @@ from fastapi.responses import PlainTextResponse
 
 from engine import OasisEngine
 
+# ==========================================
+# FASTAPI
+# ==========================================
+
 app = FastAPI(
     title="OASIS",
     description="Chatbot Inteligente para Bienestar Universitario",
@@ -31,9 +35,8 @@ VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "OASIS_UTP_2026")
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
 
-
 # ==========================================
-# WEB
+# RUTA PRINCIPAL
 # ==========================================
 
 @app.get("/")
@@ -43,6 +46,9 @@ def inicio():
         "estado": "Servidor funcionando correctamente"
     }
 
+# ==========================================
+# PRUEBA WEB
+# ==========================================
 
 @app.get("/mensaje")
 def mensaje(texto: str = ""):
@@ -54,20 +60,11 @@ def mensaje(texto: str = ""):
 
     return engine.procesar(texto)
 
-
 # ==========================================
 # ENVIAR MENSAJE A WHATSAPP
 # ==========================================
 
 def enviar_mensaje(numero: str, mensaje: str):
-
-    if not WHATSAPP_TOKEN:
-        print("ERROR: WHATSAPP_TOKEN vacío")
-        return
-
-    if not PHONE_NUMBER_ID:
-        print("ERROR: PHONE_NUMBER_ID vacío")
-        return
 
     url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
 
@@ -85,18 +82,19 @@ def enviar_mensaje(numero: str, mensaje: str):
         }
     }
 
-    # ==========================
-    # DEPURACIÓN
-    # ==========================
-
-    print("====================================")
+    print("\n==============================")
     print("ENVIANDO MENSAJE A META")
-    print("TOKEN:", WHATSAPP_TOKEN[:25], "...")
-    print("PHONE_NUMBER_ID:", PHONE_NUMBER_ID)
-    print("DESTINATARIO:", numero)
+    print("==============================")
     print("URL:", url)
+    print("PHONE_NUMBER_ID:", PHONE_NUMBER_ID)
+
+    if WHATSAPP_TOKEN:
+        print("TOKEN:", WHATSAPP_TOKEN[:20] + "...")
+    else:
+        print("TOKEN: NO ENCONTRADO")
+
+    print("DESTINO:", numero)
     print("MENSAJE:", mensaje)
-    print("====================================")
 
     respuesta = requests.post(
         url,
@@ -104,9 +102,10 @@ def enviar_mensaje(numero: str, mensaje: str):
         json=data
     )
 
-    print("Respuesta Meta:", respuesta.status_code)
+    print("\n====== RESPUESTA META ======")
+    print("STATUS:", respuesta.status_code)
     print(respuesta.text)
-
+    print("============================\n")
 
 # ==========================================
 # VERIFICAR WEBHOOK
@@ -119,17 +118,16 @@ async def verificar_webhook(request: Request):
     token = request.query_params.get("hub.verify_token")
     challenge = request.query_params.get("hub.challenge")
 
-    print("Verificando webhook...")
+    print("\nVerificando Webhook")
     print("MODE:", mode)
     print("TOKEN:", token)
 
     if mode == "subscribe" and token == VERIFY_TOKEN:
-        print("Webhook verificado correctamente")
+        print("Webhook verificado correctamente.")
         return PlainTextResponse(challenge)
 
-    print("Error de verificación")
+    print("Error de verificación.")
     return PlainTextResponse("Error", status_code=403)
-
 
 # ==========================================
 # RECIBIR MENSAJES
@@ -140,10 +138,10 @@ async def recibir_webhook(request: Request):
 
     body = await request.json()
 
-    print("====================================")
+    print("\n==============================")
     print("MENSAJE RECIBIDO DESDE WHATSAPP")
+    print("==============================")
     print(body)
-    print("====================================")
 
     try:
 
@@ -153,16 +151,17 @@ async def recibir_webhook(request: Request):
         value = body["entry"][0]["changes"][0]["value"]
 
         if "messages" not in value:
+            print("No llegaron mensajes.")
             return {"status": "ok"}
 
         mensaje = value["messages"][0]
 
-        if mensaje["type"] != "text":
-            print("Mensaje no es texto")
-            return {"status": "ok"}
-
         numero = mensaje["from"]
-        texto = mensaje["text"]["body"]
+
+        texto = ""
+
+        if mensaje["type"] == "text":
+            texto = mensaje["text"]["body"]
 
         print("Número:", numero)
         print("Texto:", texto)
@@ -189,7 +188,8 @@ async def recibir_webhook(request: Request):
 
     except Exception as e:
 
-        print("ERROR GENERAL")
+        print("\n========== ERROR GENERAL ==========")
         print(str(e))
+        print("===================================\n")
 
     return {"status": "ok"}
