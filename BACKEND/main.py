@@ -23,18 +23,18 @@ app.add_middleware(
 
 engine = OasisEngine()
 
-# ==========================
+# ==========================================
 # VARIABLES DE ENTORNO
-# ==========================
+# ==========================================
 
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "OASIS_UTP_2026")
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
 
 
-# ==========================
+# ==========================================
 # WEB
-# ==========================
+# ==========================================
 
 @app.get("/")
 def inicio():
@@ -55,11 +55,19 @@ def mensaje(texto: str = ""):
     return engine.procesar(texto)
 
 
-# ==========================
+# ==========================================
 # ENVIAR MENSAJE A WHATSAPP
-# ==========================
+# ==========================================
 
 def enviar_mensaje(numero: str, mensaje: str):
+
+    if not WHATSAPP_TOKEN:
+        print("ERROR: WHATSAPP_TOKEN vacío")
+        return
+
+    if not PHONE_NUMBER_ID:
+        print("ERROR: PHONE_NUMBER_ID vacío")
+        return
 
     url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
 
@@ -77,6 +85,19 @@ def enviar_mensaje(numero: str, mensaje: str):
         }
     }
 
+    # ==========================
+    # DEPURACIÓN
+    # ==========================
+
+    print("====================================")
+    print("ENVIANDO MENSAJE A META")
+    print("TOKEN:", WHATSAPP_TOKEN[:25], "...")
+    print("PHONE_NUMBER_ID:", PHONE_NUMBER_ID)
+    print("DESTINATARIO:", numero)
+    print("URL:", url)
+    print("MENSAJE:", mensaje)
+    print("====================================")
+
     respuesta = requests.post(
         url,
         headers=headers,
@@ -87,9 +108,9 @@ def enviar_mensaje(numero: str, mensaje: str):
     print(respuesta.text)
 
 
-# ==========================
-# WEBHOOK WHATSAPP
-# ==========================
+# ==========================================
+# VERIFICAR WEBHOOK
+# ==========================================
 
 @app.get("/webhook")
 async def verificar_webhook(request: Request):
@@ -98,19 +119,31 @@ async def verificar_webhook(request: Request):
     token = request.query_params.get("hub.verify_token")
     challenge = request.query_params.get("hub.challenge")
 
+    print("Verificando webhook...")
+    print("MODE:", mode)
+    print("TOKEN:", token)
+
     if mode == "subscribe" and token == VERIFY_TOKEN:
+        print("Webhook verificado correctamente")
         return PlainTextResponse(challenge)
 
+    print("Error de verificación")
     return PlainTextResponse("Error", status_code=403)
 
+
+# ==========================================
+# RECIBIR MENSAJES
+# ==========================================
 
 @app.post("/webhook")
 async def recibir_webhook(request: Request):
 
     body = await request.json()
 
-    print("Mensaje recibido desde WhatsApp:")
+    print("====================================")
+    print("MENSAJE RECIBIDO DESDE WHATSAPP")
     print(body)
+    print("====================================")
 
     try:
 
@@ -124,12 +157,12 @@ async def recibir_webhook(request: Request):
 
         mensaje = value["messages"][0]
 
+        if mensaje["type"] != "text":
+            print("Mensaje no es texto")
+            return {"status": "ok"}
+
         numero = mensaje["from"]
-
-        texto = ""
-
-        if mensaje["type"] == "text":
-            texto = mensaje["text"]["body"]
+        texto = mensaje["text"]["body"]
 
         print("Número:", numero)
         print("Texto:", texto)
@@ -147,10 +180,16 @@ async def recibir_webhook(request: Request):
             else:
                 respuesta = str(respuesta)
 
-        enviar_mensaje(numero, str(respuesta))
+        print("Respuesta del chatbot:", respuesta)
+
+        enviar_mensaje(
+            numero,
+            str(respuesta)
+        )
 
     except Exception as e:
 
-        print("ERROR:", str(e))
+        print("ERROR GENERAL")
+        print(str(e))
 
     return {"status": "ok"}
