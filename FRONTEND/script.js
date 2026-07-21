@@ -8,7 +8,7 @@ const chat = document.getElementById("chat");
 const texto = document.getElementById("texto");
 const boton = document.getElementById("enviar");
 
-const URL = "http://127.0.0.1:8000/mensaje";
+const URL = "https://oasis-utp-nhd5.onrender.com/mensaje";
 
 let escribiendo = false;
 // ===============================
