@@ -51,6 +51,7 @@ def inicio():
 # ==========================================
 
 @app.get("/mensaje")
+
 def mensaje(texto: str = ""):
 
     if texto.lower() == "inicio":

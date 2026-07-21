@@ -1,3 +1,5 @@
+console.log("SCRIPT CARGADO");
+
 // ===============================
 // OASIS 3.0
 // ===============================
@@ -70,6 +72,7 @@ async function escribirMensaje(textoMensaje){
         });
 
         mensaje.innerHTML =
+            `<div class="nombre-bot">🌿 OASIS</div>` +
             textoActual.replace(/\n/g,"<br>") +
             `<div class="hora">${hora}</div>`;
 
@@ -169,6 +172,10 @@ async function enviarMensaje() {
             URL + "?texto=" + encodeURIComponent(mensaje)
 
         );
+
+        if (!respuesta.ok) {
+            throw new Error("Error del servidor");
+        }    
 
         const datos = await respuesta.json();
 

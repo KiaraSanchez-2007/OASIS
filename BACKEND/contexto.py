@@ -1,48 +1,35 @@
 """
 =========================================
-OASIS CONTEXTO
-Gestor de Contexto Conversacional
-Versión 3.0
+GESTOR DE CONTEXTO
+OASIS v4.0
 =========================================
 """
 
-
 class GestorContexto:
-
-    def __init__(self):
-
-        pass
 
     def analizar(self, memoria):
 
-        recomendaciones = []
+        recomendaciones = {
+            "recordar_nombre": False,
+            "recordar_emocion": False,
+            "recordar_tarea": False
+        }
 
-        # Si nunca realizó una técnica
-        if len(memoria.obtener_tecnicas()) == 0:
+        try:
 
-            recomendaciones.append(
-                "sugerir_tecnica"
-            )
+            if hasattr(memoria, "obtener_nombre"):
 
-        # Si ya hizo respiración
-        if "Respiración básica" in memoria.obtener_tecnicas():
+                if memoria.obtener_nombre():
+                    recomendaciones["recordar_nombre"] = True
 
-            recomendaciones.append(
-                "evitar_respiracion"
-            )
+            if memoria.obtener_emocion():
+                recomendaciones["recordar_emocion"] = True
 
-        # Si tiene muchas emociones registradas
-        if len(memoria.emociones) >= 3:
+            if memoria.obtener_tarea():
+                recomendaciones["recordar_tarea"] = True
 
-            recomendaciones.append(
-                "seguimiento_emocional"
-            )
+        except Exception as e:
 
-        # Si tiene tareas pendientes
-        if len(memoria.obtener_tareas()) > 0:
-
-            recomendaciones.append(
-                "recordar_tareas"
-            )
+            print("ERROR CONTEXTO:", e)
 
         return recomendaciones

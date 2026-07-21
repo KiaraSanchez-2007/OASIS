@@ -1,36 +1,94 @@
 class DetectorIntencion:
 
-    def detectar(self, texto: str):
+    def __init__(self):
 
-        texto = texto.lower().strip()
+        self.categorias = {
 
-        if any(p in texto for p in [
-            "estres",
-            "estresado",
-            "estresada",
-            "presion",
-            "agobiado",
-            "agobiada"
-        ]):
-            return "estres"
+            "crisis": [
 
-        if any(p in texto for p in [
-            "ansiedad",
-            "ansioso",
-            "ansiosa",
-            "nervioso",
-            "nerviosa",
-            "miedo"
-        ]):
-            return "ansiedad"
+                # Tristeza
+                "triste",
+                "llorar",
+                "lloro",
+                "deprimido",
+                "deprimida",
+                "vacío",
+                "vacio",
+                "solo",
+                "sola",
+                "desanimado",
+                "desanimada",
+                "sin ganas",
 
-        if any(p in texto for p in [
-            "cansado",
-            "cansada",
-            "fatiga",
-            "agotado",
-            "agotada"
-        ]):
-            return "cansancio"
+                # Ansiedad
+                "ansiedad",
+                "ansioso",
+                "ansiosa",
+                "nervioso",
+                "nerviosa",
+                "desesperado",
+                "desesperada",
+                "pánico",
+                "panico",
+                "ataque",
+                "respirar",
 
-        return "general"
+                # Estrés intenso
+                "estresado",
+                "estresada",
+                "colapsé",
+                "colapse",
+                "agotado",
+                "agotada",
+                "no puedo más",
+                "no doy más",
+                "no doy mas",
+
+                # Frustración
+                "frustrado",
+                "frustrada",
+                "fracaso",
+                "rendirme",
+                "rendirme",
+                "todo me sale mal",
+                "ya no puedo",
+
+                # Riesgo
+                "no quiero vivir",
+                "me quiero morir",
+                "quiero desaparecer"
+            ],
+
+            "organizacion": [
+
+                "tarea",
+                "tareas",
+                "trabajo",
+                "proyecto",
+                "organizar",
+                "agenda",
+                "cronograma",
+                "estudiar",
+                "examen",
+                "informe",
+                "tiempo"
+            ]
+        }
+
+    def detectar(self, texto):
+
+        texto = texto.lower()
+
+        # Buscar crisis
+        for palabra in self.categorias["crisis"]:
+
+            if palabra in texto:
+                return "crisis"
+
+        # Buscar organización
+        for palabra in self.categorias["organizacion"]:
+
+            if palabra in texto:
+                return "organizacion"
+
+        return "normal"

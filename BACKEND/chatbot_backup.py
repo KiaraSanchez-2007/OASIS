@@ -83,16 +83,16 @@ class OasisChatbot:
 
         self.memoria.guardar_nombre(nombre)
 
-        self.estado = "emocion"
+        self.estado = "menu_principal"
 
         return {
-
-            "mensaje":
-
-            f"Mucho gusto, {nombre}. 😊\n\n"
-
-            "¿Cómo te has sentido hoy?"
-        }
+        "mensaje":
+        f"¡Mucho gusto, {nombre}! 😊\n\n"
+        "¿En qué puedo ayudarte hoy?\n\n"
+        "1️⃣ Ayuda en una situación de crisis\n"
+        "2️⃣ Evaluar mi nivel de estrés\n"
+        "3️⃣ Tips para organizar mis actividades"
+    }
     # =====================================================
     # DETECCIÓN DE EMOCIONES
     # =====================================================
@@ -357,3 +357,56 @@ class OasisChatbot:
             "Entiendo cómo te sientes.\n\n"
             "Estoy aquí para acompañarte."
         }            
+    # =====================================================
+    # COMPATIBILIDAD CON ENGINE.PY
+    # =====================================================
+
+    def evaluar(self, opcion):
+        return self.analizar_emocion(opcion)
+
+
+    def organizar_tarea(self, tarea):
+
+        self.memoria.guardar_tarea(tarea)
+
+        self.estado = "conversacion"
+
+        return {
+            "mensaje":
+            "✅ He registrado tu tarea.\n\n"
+            "Ahora intentemos organizarla paso a paso."
+        }
+
+
+    def conversar(self, mensaje):
+        return self.conversacion(mensaje)
+
+
+    def responder(self, texto):
+
+        if self.estado == "inicio":
+            return self.bienvenida()
+
+        elif self.estado == "bienvenida":
+            return self.responder_bienvenida(texto)
+
+        elif self.estado == "esperando_nombre":
+            return self.guardar_nombre(texto)
+
+        elif self.estado == "emocion":
+            return self.analizar_emocion(texto)
+
+        elif self.estado == "menu_estres":
+            return self.menu_estres(texto)
+
+        elif self.estado == "menu_ansiedad":
+            return self.menu_ansiedad(texto)
+
+        elif self.estado == "menu_cansancio":
+            return self.menu_cansancio(texto)
+
+        elif self.estado == "esperando_tarea":
+            return self.organizar_tarea(texto)
+
+        else:
+            return self.conversacion(texto)    
